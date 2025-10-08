@@ -1,49 +1,120 @@
-# Домашнее задание к занятию "`Название занятия`" - `Фамилия и имя студента`
-
-
-### Инструкция по выполнению домашнего задания
-
-   1. Сделайте `fork` данного репозитория к себе в Github и переименуйте его по названию или номеру занятия, например, https://github.com/имя-вашего-репозитория/git-hw или  https://github.com/имя-вашего-репозитория/7-1-ansible-hw).
-   2. Выполните клонирование данного репозитория к себе на ПК с помощью команды `git clone`.
-   3. Выполните домашнее задание и заполните у себя локально этот файл README.md:
-      - впишите вверху название занятия и вашу фамилию и имя
-      - в каждом задании добавьте решение в требуемом виде (текст/код/скриншоты/ссылка)
-      - для корректного добавления скриншотов воспользуйтесь [инструкцией "Как вставить скриншот в шаблон с решением](https://github.com/netology-code/sys-pattern-homework/blob/main/screen-instruction.md)
-      - при оформлении используйте возможности языка разметки md (коротко об этом можно посмотреть в [инструкции  по MarkDown](https://github.com/netology-code/sys-pattern-homework/blob/main/md-instruction.md))
-   4. После завершения работы над домашним заданием сделайте коммит (`git commit -m "comment"`) и отправьте его на Github (`git push origin`);
-   5. Для проверки домашнего задания преподавателем в личном кабинете прикрепите и отправьте ссылку на решение в виде md-файла в вашем Github.
-   6. Любые вопросы по выполнению заданий спрашивайте в чате учебной группы и/или в разделе “Вопросы по заданию” в личном кабинете.
-   
-Желаем успехов в выполнении домашнего задания!
-   
-### Дополнительные материалы, которые могут быть полезны для выполнения задания
-
-1. [Руководство по оформлению Markdown файлов](https://gist.github.com/Jekins/2bf2d0638163f1294637#Code)
+# Домашнее задание к занятию `«GitLab»` - `Евгений Головенко`
 
 ---
 
 ### Задание 1
 
-`Приведите ответ в свободной форме........`
+**Что нужно сделать:**
 
-1. `Заполните здесь этапы выполнения, если требуется ....`
-2. `Заполните здесь этапы выполнения, если требуется ....`
-3. `Заполните здесь этапы выполнения, если требуется ....`
-4. `Заполните здесь этапы выполнения, если требуется ....`
-5. `Заполните здесь этапы выполнения, если требуется ....`
-6. 
+1. Разверните GitLab локально, используя Vagrantfile и инструкцию, описанные в [этом репозитории](https://github.com/netology-code/sdvps-materials/tree/main/gitlab).   
+2. Создайте новый проект и пустой репозиторий в нём.
+3. Зарегистрируйте gitlab-runner для этого проекта и запустите его в режиме Docker. Раннер можно регистрировать и запускать на той же виртуальной машине, на которой запущен GitLab.
+
+В качестве ответа в репозиторий шаблона с решением добавьте скриншоты с настройками раннера в проекте.
+
+---
+
+> Примечание: вариант с Vagrant не был использован из-за проблем с вложенными виртуальными машинами (`VT-x is not available (VERR_VMX_NO_VMX)`). Принято решение поднять GitLab через Docker Compose на хостовой Ubuntu VM, что принципиально не противоречит условиям задания.
+
+1. Запуск GitLab
+
+Создана рабочая директория:
 
 ```
-Поле для вставки кода...
-....
-....
-....
-....
+mkdir -p ~/gitlab-docker
+cd ~/gitlab-docker
 ```
 
-`При необходимости прикрепитe сюда скриншоты
-![Название скриншота 1](ссылка на скриншот 1)`
+docker-compose.yml:
 
+```
+version: '3.8'
+
+services:
+  gitlab:
+    image: 'gitlab/gitlab-ce:latest'
+    container_name: gitlab
+    restart: always
+    hostname: 'gitlab.local'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost:8181'
+    ports:
+      - '8181:80' #порт 8080 нв VM уже занят jenkins
+      - '443:443'
+      - '2222:22' #порт 22 на хосте уже занят
+    volumes:
+      - './config:/etc/gitlab'
+      - './logs:/var/log/gitlab'
+      - './data:/var/opt/gitlab'
+
+gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: always
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - './runner-config:/etc/gitlab-runner'
+```
+
+Запуск GitLab:
+
+```
+docker-compose up -d
+```
+
+Проверка логов:
+
+```
+docker logs -f gitlab
+```
+
+Пароль для первого входа:
+
+```
+docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
+```
+
+Далее 
+
+GitLab развернут в Docker, веб-интерфейс доступен по адресу:  
+[http://localhost:8181](http://localhost:8181)
+
+2. Создание проекта
+   
+В GitLab веб-интерфейсе:
+
+`Create new project -> Blank project`
+
+Создан пустой проект в GitLab: `homework-8-03`
+
+3. Регистрация GitLab Runner
+
+Использую контейнер Runner:
+
+```
+sudo docker exec -it gitlab-runner gitlab-runner register
+```
+
+GitLab Runner зарегистрирован с параметрами:
+
+- **GitLab instance URL:** `http://172.17.0.1:8181`  
+- **Registration token:** (GR1234567890tp1sN-SU8BuGaGaW)  
+- **Description:** `docker-runner`  
+- **Tags:** `docker,ci`  
+- **Maintenance note:** `Homework 8-03`  
+- **Executor:** `docker`  
+- **Default Docker image:** `golang:1.17`  
+
+> Для подключения Runner к GitLab используется IP Docker-хоста, иначе Runner не видит GitLab.
+
+Runner появился в GitLab -> Project -> CI/CD Settings -> Runners 
+
+## Скриншоты с настройками раннера
+
+<img width="1016" height="868" alt="Capture_runner" src="https://github.com/user-attachments/assets/0c15938b-2158-46bb-9db6-27b3ccef2513" />
+
+<img width="1018" height="711" alt="Capture_runner_2" src="https://github.com/user-attachments/assets/27091b7c-5e3d-4c45-8f4e-b961f1a7d14c" />
 
 ---
 
