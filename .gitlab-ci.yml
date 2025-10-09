@@ -1,0 +1,36 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  PROJECT_NAME: "netology-gitlab"
+
+build-job:
+  stage: build
+  tags:
+    - docker
+  script:
+    - echo "Building $PROJECT_NAME..."
+    - mkdir -p build
+    - echo "Build complete at $(date)" > build/result.txt
+  artifacts:
+    paths:
+      - build/
+
+test-job:
+  stage: test
+  tags:
+    - docker
+  script:
+    - echo "Running tests for $PROJECT_NAME..."
+    - cat build/result.txt
+    - echo "Tests passed successfully!"
+
+deploy-job:
+  stage: deploy
+  tags:
+    - docker
+  script:
+    - echo "Simulating deploy of $PROJECT_NAME..."
+    - echo "Deployment finished at $(date)"
