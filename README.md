@@ -71,7 +71,7 @@ GitLab Runner зарегистрирован с параметрами:
 - **GitLab instance URL:** `http://192.168.1.88`  
 - **Registration token:** (GR1234567890vOOdo-LV8BuGaGaW)  
 - **Description:** `docker-runner`  
-- **Tags:** `docker,ci`  
+- **Tags:** `docker,local,ci`  
 - **Maintenance note:**   
 - **Executor:** `docker`  
 - **Default Docker image:** `alpine:latest`  
