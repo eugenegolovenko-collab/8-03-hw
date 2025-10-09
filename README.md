@@ -14,71 +14,31 @@
 
 ---
 
-> Примечание: вариант с Vagrant не был использован из-за проблем с вложенными виртуальными машинами (`VT-x is not available (VERR_VMX_NO_VMX)`). Принято решение поднять GitLab через Docker Compose на хостовой Ubuntu VM, что принципиально не противоречит условиям задания.
+> Примечание: вариант с Vagrant не был использован из-за проблем с вложенными виртуальными машинами (`VT-x is not available (VERR_VMX_NO_VMX)`). Принято решение поднять GitLab на хостовом VirtualBox с VM Ubuntu, что принципиально не противоречит условиям задания.
 
-1. Запуск GitLab
+1. Установка и запуск GitLab
 
-Создана рабочая директория:
 
-```
-mkdir -p ~/gitlab-docker
-cd ~/gitlab-docker
-```
-
-docker-compose.yml:
 
 ```
-version: '3.8'
-
-services:
-  gitlab:
-    image: 'gitlab/gitlab-ce:latest'
-    container_name: gitlab
-    restart: always
-    hostname: 'gitlab.local'
-    environment:
-      GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://localhost:8181'
-    ports:
-      - '8181:80' #порт 8080 нв VM уже занят jenkins
-      - '443:443'
-      - '2222:22' #порт 22 на хосте уже занят
-    volumes:
-      - './config:/etc/gitlab'
-      - './logs:/var/log/gitlab'
-      - './data:/var/opt/gitlab'
-
-gitlab-runner:
-    image: gitlab/gitlab-runner:latest
-    container_name: gitlab-runner
-    restart: always
-    volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock'
-      - './runner-config:/etc/gitlab-runner'
-```
-
-Запуск GitLab:
-
-```
-docker-compose up -d
-```
-
-Проверка логов:
-
-```
-docker logs -f gitlab
-```
-
-Пароль для первого входа:
-
-```
-docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
+sudo apt update && sudo apt upgrade -y
+curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | sudo bash
+sudo EXTERNAL_URL="http://192.168.1.88" apt install -y gitlab-ce
 ```
 
 Далее 
 
-GitLab развернут в Docker, веб-интерфейс доступен по адресу:  
-[http://localhost:8181](http://localhost:8181)
+GitLab развернут, веб-интерфейс доступен по адресу:  
+
+с гостевой ОС: [http://localhost](http://localhost)
+
+с хоста: [http://192.168.1.88](http://192.168.1.88)
+
+Пароль для первого входа:
+
+```
+sudo cat /etc/gitlab/initial_root_password
+```
 
 2. Создание проекта
    
@@ -86,7 +46,7 @@ GitLab развернут в Docker, веб-интерфейс доступен 
 
 `Create new project -> Blank project`
 
-Создан пустой проект в GitLab: `homework-8-03`
+Создан пустой проект в GitLab: `Test project 1`
 
 3. Регистрация GitLab Runner
 
@@ -98,23 +58,20 @@ sudo docker exec -it gitlab-runner gitlab-runner register
 
 GitLab Runner зарегистрирован с параметрами:
 
-- **GitLab instance URL:** `http://172.17.0.1:8181`  
-- **Registration token:** (GR1234567890tp1sN-SU8BuGaGaW)  
+- **GitLab instance URL:** `http://192.168.1.88`  
+- **Registration token:** (GR1234567890vOOdo-LV8BuGaGaW)  
 - **Description:** `docker-runner`  
 - **Tags:** `docker,ci`  
-- **Maintenance note:** `Homework 8-03`  
+- **Maintenance note:**   
 - **Executor:** `docker`  
-- **Default Docker image:** `golang:1.17`  
-
-> Для подключения Runner к GitLab используется IP Docker-хоста, иначе Runner не видит GitLab.
+- **Default Docker image:** `alpine:latest`  
 
 Runner появился в GitLab -> Project -> CI/CD Settings -> Runners 
 
-## Скриншоты с настройками раннера
+## Скриншот с настройками раннера
 
-<img width="1016" height="868" alt="Capture_runner" src="https://github.com/user-attachments/assets/0c15938b-2158-46bb-9db6-27b3ccef2513" />
+<img width="914" height="736" alt="Capture_runner_3" src="https://github.com/user-attachments/assets/1238a4ed-0424-4a5e-8ed1-dc06c533dc27" />
 
-<img width="1018" height="711" alt="Capture_runner_2" src="https://github.com/user-attachments/assets/27091b7c-5e3d-4c45-8f4e-b961f1a7d14c" />
 
 ---
 
